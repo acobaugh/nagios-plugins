@@ -25,7 +25,7 @@ my %o = (
 
 sub usage {
 	print "Usage: check_imap_extended.pl [--help] -H <hostname> -U <user> {-p <password>|--pwdfile <file>} [-P <port>] [-f <folder>] [-S]\n";
-	exit 0;
+	exit $UNKNOWN;
 }
 
 Getopt::Long::Configure("bundling");
