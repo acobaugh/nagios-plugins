@@ -36,6 +36,13 @@ if ($o{'help'}) {
 	exit $UNKNOWN;
 }
 
+if (!$o{'p'} and $o{'pwdfile'}) {
+	open(PWDFILE, $o{'pwdfile'});
+	$o{'p'} = <PWDFILE>;
+	$o{'p'} =~ s/\s+//;
+	close PWDFILE;
+}
+
 if ( (!$o{'H'}) or (!$o{'U'}) or (!$o{'p'}) or ($o{'h'}) ) {
 	usage;
 	exit $UNKNOWN;
