@@ -1,0 +1,7 @@
+These are miscellaneous Nagios plugins/check scripts that I've developed
+for the Penn State Center for Comparative Genomics and Bioinformatics.
+
+A lot of them will make assumptions about where things are installed.
+
+These were written for deployment on Solaris 10 SPARC using the nagios
+from OpenCSW.
