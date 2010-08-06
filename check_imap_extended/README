@@ -11,3 +11,12 @@ This plugin, for now, provides a way to check that there is a positive number of
  Perl5
  Mail::IMAPClient
  IO::Socket::SSL (optional)
+
+= Usage =
+
+Here's an example nagios command definition:
+
+define command {
+	command_name    check_imap_extended
+	command_line    $USER3$/checks.d/check_imap_extended.pl -H $HOSTNAME -U $ARG1$ --pwdfile $ARG2$	$ARG3$
+}
