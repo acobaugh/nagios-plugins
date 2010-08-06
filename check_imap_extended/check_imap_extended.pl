@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use warnings;
 use strict;
@@ -16,19 +16,36 @@ my %o = (
 	'P' => 143,
 	'U' => '',
 	'f' => 'INBOX',
-	'ssl' => 0,
+	'S' => 0,
 	'pwdfile' => '',
-	'pwd' => ''
+	'p' => '',
+	'help' => 0,
+	'h' => 0
 );
 
-Getopt::Long::Configure ("bundling");
-GetOptions(\%o,	"H=s", "P=i", "U=s", "f=s", "ssl", "pwdfile=s", "pwd=s");
+sub usage {
+	print "Usage: check_imap_extended.pl [--help] -H <hostname> -U <user> {-p <password>|--pwdfile <file>} [-P <port>] [-f <folder>] [-S]\n";
+	exit 0;
+}
+
+Getopt::Long::Configure("bundling");
+GetOptions(\%o,	"help", "h", "H=s", "P=i", "U=s", "f=s", "S", "pwdfile=s", "p=s") or usage;
+
+if ($o{'help'}) {
+	exec('perldoc', '-T', $0);
+	exit $UNKNOWN;
+}
+
+if ( (!$o{'H'}) or (!$o{'U'}) or (!$o{'p'}) or ($o{'h'}) ) {
+	usage;
+	exit $UNKNOWN;
+}
 
 my $imap = Mail::IMAPClient->new(
 	Server => $o{'H'},
 	User => $o{'U'},
-	Password => $o{'pwd'},
-	Ssl => $o{'ssl'},
+	Password => $o{'p'},
+	Ssl => $o{'S'},
 	Port => $o{'P'},
 );
 
@@ -54,5 +71,73 @@ if (defined($imap)) {
 	}
 } else {
 	print "CRITICAL: Could not connect\n";
+	exit $CRITICAL;
 }
 
+
+__END__
+
+=head1 NAME
+
+check_imap_extended.pl - Check for a positive message count in a given folder on a given IMAP server
+
+=head1 SYNOPSIS
+
+check_imap_extended.pl [--help] -H <hostname> -U <user> {-p <password>|--pwdfile <file>} [-P <port>] [-f <folder>] [-S]
+
+=head1 OPTIONS
+
+Required:
+
+=over
+
+=item B<-H>
+
+Hostname to connect to.
+
+=item B<-U>
+
+Username to use.
+
+=item B<-p>
+Password for user. Either -p or --pwdfile must be specified.
+
+=back
+
+Optional:
+
+=over
+
+=item B<--help>
+
+Prints this full help message
+
+=item B<-P>
+
+Port. Defaults to 143.
+
+=item B<-S>
+
+Use SSL. Defaults to no.
+
+=item B<--pwdfile>
+
+File containing password for user. Either --pwdfile or -p must be specified.
+
+=item B<-f>
+
+Folder to check.
+
+=back
+
+=head1 SEE ALSO
+
+Nagios: L<http://www.nagios.org/>
+
+Phalenor's Nagios plugins: L<http://github.com/phalenor/nagios_plugins>
+
+=head1 AUTHOR
+
+Andy Cobaugh <phalenor@gmail.com>
+
+=cut
