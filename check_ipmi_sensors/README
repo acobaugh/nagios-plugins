@@ -1,0 +1,27 @@
+Based on another script I found online, modified to work in our environment, read
+passwords from a file, provide a more concise output, and allow certain sensors to
+be ignored in case you have some that flip-flop often.
+
+Original comment header from check_ipmi_sensors.pl:
+
+# based on check_stuff.pl
+
+# Alexander Greiner-Baer <alexander.greiner-baer@web.der> 2007
+# mainly inspired by check_ipmi: Chris Wilson <check_ipmi@qwirx.com>, 2005-06-04
+# see Chris Wilson's site: http://www.qwirx.com/check_ipmi
+# 
+# Nagios plugin using the Nagios::Plugin module and ipmitool.  
+# see: http://ipmitool.sourceforge.net/
+# tested with ipmitool 1.8.8
+#
+# checks status of temperature sensors and fans
+#
+# License: GPL
+#
+# Changelog:
+# 1.1	perform checking on command line options
+#	--
+# 1	initial release
+# 
+##############################################################################
+
