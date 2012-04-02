@@ -1,0 +1,12 @@
+This check script uses CITI's pynfs test suite to perform
+some basic checks against an NFSv4 server.
+
+PyNFS can be found here:
+
+    http://www.citi.umich.edu/projects/nfsv4/pynfs/
+
+todo:
+- add support for -i|--ignore to ignore FAILURE results for specific tests
+- add perldoc support
+- fix up usage() to be a little more helpful
+- add a --debug or --verbose option
