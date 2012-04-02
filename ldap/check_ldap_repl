@@ -1,0 +1,50 @@
+#!/bin/sh
+
+ldapsearch_cmd=/usr/bin/ldapsearch
+ldapsearch_options="-LLL -x -s base contextCSN"
+
+usage () {
+	echo
+    echo "\
+$0: Check OpenLDAP syncrepl status based on contextCSN
+
+-H, --hostname=HOST	Hostname or IP of Slave to check
+-M, --master=HOST Hostname or IP of Master
+-b, --base=DIT_BASE		Port on which KDC runs (default 88)
+-h, --help 		Print this help"
+echo
+}
+
+while [ $# -gt 0 ]; do
+    case $1 in
+	-h|--help) usage; exit $STATE_OK;;
+	-H|--hostname) shift; slave=$1;	shift;;
+	-M|--master) shift; master=$1; shift;;
+	-b|--base) shift; base=$1; shift;;
+	*) usage; exit $STATE_UNKNOWN;;
+    esac
+done
+
+if [ -z "$slave" -o -z "$master" -o -z "$base" ]; then
+    usage; exit 3
+fi
+
+master_csn=`$ldapsearch_cmd -h $master -b $base $ldapsearch_options | grep contextCSN | cut -f2 -d' '`
+if [ $? -ne 0 ]; then
+	echo UNKOWN: Could not get master contextCSN
+	exit 3
+fi
+
+slave_csn=`$ldapsearch_cmd -h $slave -b $base $ldapsearch_options | grep contextCSN | cut -f2 -d' '`
+if [ $? -ne 0 ]; then
+	echo UNKOWN: Could not get slave contextCSN
+	exit 3
+fi
+
+if [ "$master_csn" = "$slave_csn" ]; then
+	echo OK: Slave contextCSN matches master - $master_csn
+	exit 0
+else
+	echo CRITICAL: Slave out of sync - $master_csn vs $slave_csn
+	exit 2
+fi
