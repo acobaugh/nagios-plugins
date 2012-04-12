@@ -66,6 +66,9 @@ if (! open IPMI, "$IPMITOOL -H $host -U $user -f $pwfile $SDR |") {
 	exit $STATUSCODE{'UNKOWN'};
 }
 
+# this is used to generate unique names
+my %seen;
+
 # parse ipmitool output
 my (%sensors_ok, %sensors_critical, %sensors_warning);
 while (my $line = <IPMI>) {
@@ -83,7 +86,16 @@ while (my $line = <IPMI>) {
 
 	# skip not readable entries
 	next if $state eq "ns";
-		
+
+	# generate unique name for this sensor if we've already seen it before
+	if (! defined $seen{$name}) {	
+		# store next number to append
+		$seen{$name} = 2;
+	} else {
+		$name = $name . $seen{$name};
+		$seen{$name}++;
+	}
+
 	# skip values we should ignore
 	if (defined $ignore{$name}) {
 		print "skipping $name\n" if $verbose;
