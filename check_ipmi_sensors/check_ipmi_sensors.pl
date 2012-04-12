@@ -8,7 +8,7 @@ use Getopt::Long qw(:config bundling);
 my $PROGRAM = "IPMI Sensors";
 
 # Path to ipmitool
-my $IPMITOOL = "/usr/sfw/bin/ipmitool";
+my $IPMITOOL = "/usr/bin/ipmitool";
 
 # sdr command
 my $SDR = "sdr list full";
