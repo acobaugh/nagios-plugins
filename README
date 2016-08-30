@@ -1,7 +1,9 @@
 These are miscellaneous Nagios plugins/check scripts that I've developed
-for the Penn State Center for Comparative Genomics and Bioinformatics.
+for various systems while employed by Penn State.
 
-A lot of them will make assumptions about where things are installed.
+A lot of them will make assumptions about where things are installed, and some
+may have no bearing on anything outside of PSU, but may still serve as an
+inspiration to others.
 
-These were written for deployment on Solaris 10 SPARC using the nagios
-from OpenCSW.
+I welcome any changes and contributions to these scripts. If you find them
+useful, please let me know!
