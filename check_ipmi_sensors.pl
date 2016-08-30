@@ -18,9 +18,9 @@ my %STATUSCODE = (
 	'OK' => 0,
 	'WARNING' => 1,
 	'CRITICAL' => 2,
-	'UNKOWN' => 3
+	'UNKNOWN' => 3
 );
-
+my $options = "";
 my @_ignore = ();
 GetOptions(
 	"H|host=s" => \(my $host),
@@ -28,7 +28,8 @@ GetOptions(
 	"h|help" => \(my $help),
 	"P|pwfile=s" => \(my $pwfile),
 	"i|ignore=s" => \@_ignore,
-	"v|verbose" => \(my $verbose)
+	"v|verbose" => \(my $verbose),
+	"o|options=s" => \$options
 );
 
 # build an ignore hash for faster lookup
@@ -44,10 +45,10 @@ if ($help) {
 
 # perform checking on command line options
 if ( !( (defined $host) && (defined $user) && (defined $pwfile) ) ) {
-		print "$PROGRAM UNKOWN\n";
+		print "$PROGRAM UNKNOWN\n";
 		print "Missing command line options\n";
 		usage();
-		exit $STATUSCODE{'UNKOWN'};
+		exit $STATUSCODE{'UNKNOWN'};
 }
 
 # remove leading and trailing whitespace
@@ -58,17 +59,23 @@ sub trim ($) {
 	return $v;
 }
 
+# ipmitool will sit and wait for a password if this file does not exist or is empty
+if (! -s $pwfile ) {
+	print "$PROGRAM UNKNOWN\n";
+	print "Password file $pwfile is empty, unreadable, or does not exist.\n";
+	exit $STATUSCODE{'UNKNOWN'};
+}
 
 # open ipmitool
-if (! open IPMI, "$IPMITOOL -H $host -U $user -f $pwfile $SDR |") {
-	print "$PROGRAM UNKOWN\n";
+if (! open IPMI, "$IPMITOOL $options -H $host -U $user -f $pwfile $SDR 2>&1 |") {
+	print "$PROGRAM UNKNOWN\n";
 	print "$!\n";
-	exit $STATUSCODE{'UNKOWN'};
+	exit $STATUSCODE{'UNKNOWN'};
 }
 
 # this is used to generate unique names
 my %seen;
-
+my $perfdata = "";
 # parse ipmitool output
 my (%sensors_ok, %sensors_critical, %sensors_warning);
 while (my $line = <IPMI>) {
@@ -76,9 +83,9 @@ while (my $line = <IPMI>) {
 	print "$line\n" if ( $verbose );
 	unless ($line =~ m/^(.*) \| (.*) \| (\w+)$/)
 	{
-		print "$PROGRAM UNKOWN\n";
-		print "Bad format in ipmitool output: $line\n";
-		exit $STATUSCODE{'UNKOWN'};
+		print "$PROGRAM UNKNOWN\n";
+		print "Unexpected ipmitool output: $line\n";
+		exit $STATUSCODE{'UNKNOWN'};
 	}
 	my $name  = trim $1;
 	my $value = trim $2;
@@ -116,12 +123,17 @@ while (my $line = <IPMI>) {
 	if ($state eq "cr" or $state eq "nr") {
 		$sensors_critical{$name} = $value;
 	}
+	my $perf_name = $name;
+	$perf_name =~ s/\ /_/g;
+	if ($value =~ /(\d*\.?\d+?)/) {
+		$perfdata .= "$perf_name=$1;;;; ";
+	}
 }
 
 if (!close IPMI) {
-	print "$PROGRAM UNKOWN\n";
+	print "$PROGRAM UNKNOWN\n";
 	print "$! $?\n";
-	exit $STATUSCODE{'UNKOWN'};
+	exit $STATUSCODE{'UNKNOWN'};
 }
 
 # set initial status
@@ -165,8 +177,12 @@ if ($message_warn ne '' or $message_crit ne '') {
 my $message = $message_crit . $message_warn . $message_ok;
 
 # print out $status, critical, warning, and ok sensor count, then the sensor name/value
-printf "%s: (C:%d W:%d O:%d) %s\n", 
-	$status, scalar keys %sensors_critical, scalar keys %sensors_warning, scalar keys %sensors_ok, $message;
+printf "%s: (C:%d W:%d O:%d) %s|%s\n", 
+	$status, 
+	scalar keys %sensors_critical, 
+	scalar keys %sensors_warning, 
+	scalar keys %sensors_ok, 
+	$message, $perfdata;
 exit $STATUSCODE{$status};
 
 sub usage {
