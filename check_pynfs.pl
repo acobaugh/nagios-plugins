@@ -6,8 +6,8 @@ use warnings;
 use Getopt::Long qw(:config bundling);
 use File::Temp;
 
-my $PYNFS='/usr/local/nagios/etc/checks.d/pynfs/nfs4.0/testserver.py';
-my $KINIT='/usr/kerberos/bin/kinit';
+my $PYNFS='/usr/bin/nfs4_testserver.py';
+my $KINIT='/usr/bin/kinit';
 
 my $DEFAULT_TESTS = 'access';
 
@@ -65,6 +65,8 @@ my %tests_pass = ();
 my %tests_fail = ();
 my $command_results = "";
 my @command_output;
+my $init_failed;
+my $msg = "";
 
 # build string of tests based on passed options, or fall
 # back to $DEFAULT_TESTS
@@ -80,7 +82,6 @@ my $outfile = File::Temp->new();
 
 # define command to run	
 my $command = "KRB5CCNAME=$cc $PYNFS --security=krb5i $host:$path --outfile=$outfile --maketree $tests";
-
 
 # run command
 if (!open(OUTPUT, "$command 2>&1|")) {
@@ -103,6 +104,15 @@ if (!open(OUTPUT, "$command 2>&1|")) {
 		if ( $_ =~ /^Command line|^Of those/ ) {
 			$command_results = "$command_results$_ ";
 		}
+		
+		# init failed
+		if ($_ =~ /^Initialization failed/) {
+			$init_failed = 1;
+		}
+		
+		if ($_ =~ /(^Server returned:.+|.+instead got.+)/) {
+			$msg = $1;
+		}
 
 		# This is a test result
 		if ( $_ =~ /(.+)\s\S+\s:\s(PASS|WARNING|FAILURE)/ ) {
@@ -121,6 +131,12 @@ if (!open(OUTPUT, "$command 2>&1|")) {
 
 my $num_fail = scalar keys %tests_fail;
 my $num_pass = scalar keys %tests_pass;
+
+# something failed trying to initialize a connection
+if ($init_failed) {
+	print "CRITICAL: Initialization failed: $msg\n";
+	exit $STATUSCODE{'CRITICAL'};
+}
 
 # We didn't see any test results, return UNKNOWN
 if ($num_fail == 0 && $num_pass == 0) {
